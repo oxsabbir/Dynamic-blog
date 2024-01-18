@@ -1,37 +1,74 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const validator = require("validator");
 
-const userSchema = new mongoose.Schema({
-  userName: {
-    type: String,
-    unique: true,
-    require: [true, "A unique user name is require"],
-    max: 25,
-  },
-  name: {
-    type: String,
-    require: [true, "A user must have a good name"],
-  },
-  totalClaps: Number,
-  password: String,
-
-  confirmPassowrd: {
-    type: Stirng,
-    validate: {
-      validator: (pass) => this.password === pass,
-      message: "Confirm password did not match",
+const userSchema = new mongoose.Schema(
+  {
+    userName: {
+      type: String,
+      unique: true,
+      require: [true, "A unique user name is require"],
+      max: 25,
     },
-    follower: [mongoose.Types.ObjectId],
-    following: [mongoose.Types.ObjectId],
+    email: {
+      type: String,
+      unique: true,
+      require: [true, "Please provide a email"],
+      validate: [validator.isEmail, "Please provide a valid email"],
+    },
+    name: {
+      type: String,
+      require: [true, "A user must have a good name"],
+    },
 
-    profileImage: Stirng,
+    totalClaps: {
+      type: Number,
+      default: 0,
+    },
 
-    coverImage: Stirng,
+    password: {
+      type: String,
+      select: false,
+      require: [true, "A user must need a secure password"],
+    },
 
-    createdAt: {
-      type: Date,
-      default: Date.now(),
+    confirmPassowrd: {
+      type: String,
+      validate: {
+        validator: (pass) => this.password === pass,
+        message: "Confirm password did not match",
+      },
+
+      follower: [mongoose.Types.ObjectId],
+      following: [mongoose.Types.ObjectId],
+
+      profileImage: String,
+
+      coverImage: String,
+
+      createdAt: {
+        type: Date,
+        default: Date.now(),
+      },
     },
   },
+  {
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
+  }
+);
+
+// Encrypting password before savin to database
+userSchema.pre("save", async function (next) {
+  const encryptedPassword = await bcrypt.hash(this.password, 12);
+  console.log(encryptedPassword);
+  this.password = encryptedPassword;
+  this.confirmPassowrd = undefined;
+  next();
 });
 
 const userModel = mongoose.model("User", userSchema);
