@@ -1,11 +1,12 @@
 const { Router } = require("express");
 const blogController = require("../controller/blogController");
+const authController = require("../controller/authController");
 
 const router = Router();
 
 router
   .route("/")
-  .get(blogController.getAllBlog)
+  .get(authController.protect, blogController.getAllBlog)
   .post(blogController.createNewBlog);
 
 module.exports = router;

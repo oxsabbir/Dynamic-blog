@@ -3,6 +3,9 @@ const asyncHandler = require("../utils/asyncHandler");
 
 exports.getAllBlog = asyncHandler(async function (req, res, next) {
   const blog = await Blog.find();
+
+  console.log(req.cookies.jwt);
+
   res.status(200).json({
     status: "success",
     result: blog.length,

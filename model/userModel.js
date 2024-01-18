@@ -7,12 +7,25 @@ const userSchema = new mongoose.Schema(
     userName: {
       type: String,
       unique: true,
+      trim: true,
+      validate: {
+        validator: function (value) {
+          console.log(value);
+          if (value.trim().includes(" ")) {
+            return false;
+          }
+        },
+        message: "Remove space between username",
+      },
+      lowercase: true,
       require: [true, "A unique user name is require"],
       max: 25,
     },
+
     email: {
       type: String,
       unique: true,
+      lowercase: true,
       require: [true, "Please provide a email"],
       validate: [validator.isEmail, "Please provide a valid email"],
     },
@@ -70,6 +83,14 @@ userSchema.pre("save", async function (next) {
   this.confirmPassowrd = undefined;
   next();
 });
+
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  console.log("checking password");
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
 
 const userModel = mongoose.model("User", userSchema);
 
