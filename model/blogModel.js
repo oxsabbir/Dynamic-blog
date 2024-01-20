@@ -34,6 +34,7 @@ blogSchema.virtual("commnets", {
 });
 
 blogSchema.statics.calculateTotalClaps = async function (userId) {
+  console.log(userId);
   const stats = await this.aggregate([
     {
       $match: { user: userId },
@@ -46,6 +47,7 @@ blogSchema.statics.calculateTotalClaps = async function (userId) {
     },
   ]);
   console.log(stats);
+
   if (stats.length > 0) {
     await User.findOneAndUpdate(
       { _id: stats[0]._id },
@@ -55,6 +57,7 @@ blogSchema.statics.calculateTotalClaps = async function (userId) {
 };
 
 // calculating and updating the claps after the blog is saved
+// here this is an document middleware that's why we can access the from here
 
 blogSchema.post("save", function () {
   this.constructor.calculateTotalClaps(this.user._id);
@@ -69,8 +72,9 @@ blogSchema.pre(/^findOneAnd/, async function (next) {
 
 // now using the statics for updating the total claps when a blog is updated
 
+// here this is an query middlware we cannot access user here
 blogSchema.post(/^findOneAnd/, function () {
-  this.r.constructor.calculateTotalClaps(this.user._id);
+  this.r.constructor.calculateTotalClaps(this.r.user);
 });
 
 const blogModel = mongoose.model("Blog", blogSchema);

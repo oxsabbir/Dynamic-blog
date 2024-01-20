@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
@@ -44,6 +45,9 @@ const userSchema = new mongoose.Schema(
       select: false,
       require: [true, "A user must need a secure password"],
     },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordExpiresIn: Date,
 
     confirmPassowrd: {
       type: String,
@@ -74,6 +78,30 @@ const userSchema = new mongoose.Schema(
     },
   }
 );
+// instance method
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// creating password reset token
+userSchema.methods.createResetToken = function () {
+  // creating random string
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  // storing the encrypted token to database
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // 10 minute expires time from when it's generated
+
+  this.passwordExpiresIn = Date.now() + 10 * 1000;
+  // sending the plain to token to user
+  return resetToken;
+};
 
 // Virtual Populating based on referencing to the blog resource
 userSchema.virtual("blogs", {
@@ -82,8 +110,10 @@ userSchema.virtual("blogs", {
   foreignField: "user",
 });
 
-// Encrypting password before savin to database
+// Encrypting password before savin the document into database
 userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  console.log(this.isModified("password"));
   const encryptedPassword = await bcrypt.hash(this.password, 12);
   console.log(encryptedPassword);
   this.password = encryptedPassword;
@@ -91,13 +121,12 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.correctPassword = async function (
-  candidatePassword,
-  userPassword
-) {
-  console.log("checking password");
-  return await bcrypt.compare(candidatePassword, userPassword);
-};
+userSchema.pre("save", function (next) {
+  if (!this.isModified("password") || this.isNew) return next();
+  console.log("changed password");
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
 
 const userModel = mongoose.model("User", userSchema);
 
