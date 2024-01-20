@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
 
+const User = require("../model/userModel");
+
 const blogSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -9,9 +11,12 @@ const blogSchema = new mongoose.Schema({
     type: String,
     require: [true, "A blog must have some content"],
   },
-  claps: Number,
+  claps: {
+    type: Number,
+    default: 0,
+  },
 
-  author: {
+  user: {
     type: mongoose.Types.ObjectId,
     ref: "User",
   },
@@ -22,11 +27,50 @@ const blogSchema = new mongoose.Schema({
 });
 
 // virtual populate
-
 blogSchema.virtual("commnets", {
   ref: "Comment",
   localField: "_id",
   foreignField: "user",
+});
+
+blogSchema.statics.calculateTotalClaps = async function (userId) {
+  const stats = await this.aggregate([
+    {
+      $match: { user: userId },
+    },
+    {
+      $group: {
+        _id: "$user",
+        numberOfClaps: { $sum: "$claps" },
+      },
+    },
+  ]);
+  console.log(stats);
+  if (stats.length > 0) {
+    await User.findOneAndUpdate(
+      { _id: stats[0]._id },
+      { totalClaps: stats[0].numberOfClaps }
+    );
+  }
+};
+
+// calculating and updating the claps after the blog is saved
+
+blogSchema.post("save", function () {
+  this.constructor.calculateTotalClaps(this.user._id);
+});
+
+// cloning the query for future like findoneandupdate or delete. those claps should be updated
+
+blogSchema.pre(/^findOneAnd/, async function (next) {
+  this.r = await this.clone().findOne();
+  next();
+});
+
+// now using the statics for updating the total claps when a blog is updated
+
+blogSchema.post(/^findOneAnd/, function () {
+  this.r.constructor.calculateTotalClaps(this.user._id);
 });
 
 const blogModel = mongoose.model("Blog", blogSchema);

@@ -75,6 +75,13 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Virtual Populating based on referencing to the blog resource
+userSchema.virtual("blogs", {
+  ref: "Blog",
+  localField: "_id",
+  foreignField: "user",
+});
+
 // Encrypting password before savin to database
 userSchema.pre("save", async function (next) {
   const encryptedPassword = await bcrypt.hash(this.password, 12);
