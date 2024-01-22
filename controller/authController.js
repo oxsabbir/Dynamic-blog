@@ -53,7 +53,6 @@ exports.protect = asyncHandler(async function (req, res, next) {
   // check if user exist or not
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
   const userInfo = await User.findOne({ _id: decoded.id });
-  console.log(decoded);
 
   // checking if user changed password after the token has been issued
   if (

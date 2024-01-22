@@ -2,35 +2,38 @@ const mongoose = require("mongoose");
 
 const User = require("../model/userModel");
 
-const blogSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    require: [true, "A blog must have a title"],
-  },
-  content: {
-    type: String,
-    require: [true, "A blog must have some content"],
-  },
-  claps: {
-    type: Number,
-    default: 0,
-  },
+const blogSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      require: [true, "A blog must have a title"],
+    },
+    content: {
+      type: String,
+      require: [true, "A blog must have some content"],
+    },
+    claps: {
+      type: Number,
+      default: 0,
+    },
 
-  user: {
-    type: mongoose.Types.ObjectId,
-    ref: "User",
+    user: {
+      type: mongoose.Types.ObjectId,
+      ref: "User",
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now(),
+    },
   },
-  createdAt: {
-    type: Date,
-    default: Date.now(),
-  },
-});
+  { toJSON: { virtuals: true }, toObject: { virtuals: true } }
+);
 
 // virtual populate
 blogSchema.virtual("commnets", {
   ref: "Comment",
   localField: "_id",
-  foreignField: "user",
+  foreignField: "blog",
 });
 
 blogSchema.statics.calculateTotalClaps = async function (userId) {

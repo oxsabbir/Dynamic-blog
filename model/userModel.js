@@ -56,7 +56,6 @@ const userSchema = new mongoose.Schema(
         message: "Confirm password did not match",
       },
 
-      follower: [mongoose.Types.ObjectId],
       following: [mongoose.Types.ObjectId],
 
       profileImage: String,
@@ -85,6 +84,27 @@ userSchema.methods.correctPassword = async function (
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
 };
+
+// Populating follower
+userSchema.virtual("totalFollowers", {
+  ref: "Follower",
+  localField: "_id",
+  foreignField: "followsTo",
+  count: true,
+});
+
+userSchema.virtual("followers", {
+  ref: "Follower",
+  localField: "_id",
+  foreignField: "followsTo",
+});
+
+userSchema.pre(/^find/, function (next) {
+  this.populate({
+    path: "totalFollowers",
+  });
+  next();
+});
 
 // creating password reset token
 userSchema.methods.createResetToken = function () {

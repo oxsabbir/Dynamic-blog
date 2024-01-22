@@ -16,7 +16,10 @@ exports.getAllBlog = asyncHandler(async function (req, res, next) {
 exports.getBlog = asyncHandler(async function (req, res, next) {
   const blogId = req.params?.id;
   console.log(blogId);
-  const blog = await Blog.findById(blogId);
+  const blog = await Blog.findById(blogId).populate({
+    path: "commnets",
+    options: { strictPopulate: false },
+  });
   res.status(200).json({
     status: "success",
     data: {
