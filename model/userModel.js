@@ -39,6 +39,9 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    photo: String,
+
+    coverImage: String,
 
     password: {
       type: String,
@@ -55,12 +58,11 @@ const userSchema = new mongoose.Schema(
         validator: (pass) => this.password === pass,
         message: "Confirm password did not match",
       },
+      alreadyFollowed: {
+        type: Boolean,
+      },
 
       following: [mongoose.Types.ObjectId],
-
-      profileImage: String,
-
-      coverImage: String,
 
       createdAt: {
         type: Date,
