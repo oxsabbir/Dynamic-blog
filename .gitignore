@@ -3,7 +3,7 @@ node_modules/
 
 # Visual Studio Code
 .vscode/
-config.env
+conf.env
 .env
 # npm
 npm-debug.log

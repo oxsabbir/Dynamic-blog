@@ -3,10 +3,9 @@ const mongoose = require("mongoose");
 
 // Starting the server
 
-dotenv.config({ path: "./config.env" });
+dotenv.config({ path: "./conf.env" });
 
 const app = require("./app");
-
 // connecting to the data base
 
 const DB = process.env.DATABASE.replace(
